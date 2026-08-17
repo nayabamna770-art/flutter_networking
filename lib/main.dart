@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'cubits/auth_cubit.dart';
 import 'cubits/todos_cubit.dart';
 import 'data/services/hive_service.dart';
 import 'ui/login_screen.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  
-  // Open boxes for users and todos
-  await Hive.openBox('usersBox');
-  await Hive.openBox('todosBox');
-  await Hive.openBox('sessionBox');
+
+  // Open boxes matching the exact keys used in LocalStorageService
+  await Hive.openBox('users');
+  await Hive.openBox('todos');
+  await Hive.openBox('session');
+
   runApp(const MyApp());
 }
 
