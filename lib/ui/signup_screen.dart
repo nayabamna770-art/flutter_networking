@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/auth_cubit.dart';
 import '../cubits/auth_state.dart';
-import '../data/models/user_signup_model.dart';
+//import '../data/models/user_signup_model.dart';
 import 'widgets/background_painter.dart';
 
 class SignUpScreen extends StatefulWidget {

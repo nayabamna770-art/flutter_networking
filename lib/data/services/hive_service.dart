@@ -1,26 +1,50 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import '../models/user_signup_model.dart';
 
 class LocalStorageService {
   final Box _usersBox = Hive.box('users');
   final Box _todosBox = Hive.box('todos');
   final Box _sessionBox = Hive.box('session');
 
-  // Sign Up: Store user credentials
-  Future<void> signUp(String email, String password) async {
-    if (_usersBox.containsKey(email)) {
-      throw Exception('User already registered!');
+  // Sign Up: Accepts UserSignUpModel and returns Map<String, dynamic>
+  Future<Map<String, dynamic>> signUp(UserSignUpModel user) async {
+    if (_usersBox.containsKey(user.email)) {
+      return {
+        'success': false,
+        'message': 'User already registered!',
+      };
     }
-    await _usersBox.put(email, password);
+
+    await _usersBox.put(user.email, user.password);
+    await _sessionBox.put('active_user', user.email);
+
+    return {
+      'success': true,
+      'message': 'Account created successfully!',
+      'token': 'local_token_${user.email}',
+      'data': {'email': user.email},
+    };
   }
 
-  // Login: Validate credentials & set active session
-  Future<String> login(String email, String password) async {
+  // Login: Returns Map<String, dynamic>
+  Future<Map<String, dynamic>> login(String email, String password) async {
     final storedPassword = _usersBox.get(email);
+
     if (storedPassword == null || storedPassword != password) {
-      throw Exception('Invalid email or password');
+      return {
+        'success': false,
+        'message': 'Invalid email or password',
+      };
     }
+
     await _sessionBox.put('active_user', email);
-    return email;
+
+    return {
+      'success': true,
+      'message': 'Login successful!',
+      'token': 'local_token_$email',
+      'data': {'email': email},
+    };
   }
 
   // Get Current Logged-In User
@@ -33,14 +57,12 @@ class LocalStorageService {
     await _sessionBox.delete('active_user');
   }
 
-  // Fetch To-Dos for Current User
+  // Fetch To-Dos
   List<Map<String, dynamic>> getTodos() {
     final activeUser = getActiveUser();
     if (activeUser == null) return [];
 
     final rawList = _todosBox.get(activeUser, defaultValue: []);
-    
-    // Cast dynamic Hive list back to List<Map<String, dynamic>>
     return (rawList as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
@@ -61,7 +83,17 @@ class LocalStorageService {
     await _todosBox.put(activeUser, todos);
   }
 
-  // Toggle To-Do Completion Status
+  // Delete To-Do
+  Future<void> deleteTodo(String id) async {
+    final activeUser = getActiveUser();
+    if (activeUser == null) return;
+
+    final todos = getTodos();
+    todos.removeWhere((todo) => todo['id'] == id);
+    await _todosBox.put(activeUser, todos);
+  }
+
+  // Toggle To-Do Status
   Future<void> toggleTodo(String id) async {
     final activeUser = getActiveUser();
     if (activeUser == null) return;

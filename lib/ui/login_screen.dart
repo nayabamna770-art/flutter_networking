@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (_) => TodosScreen(token: state.token),
+                            builder: (context) => const TodoScreen(),
                           ),
                         );
                       } else if (state is AuthFailure) {

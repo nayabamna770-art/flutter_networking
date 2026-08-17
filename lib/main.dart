@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubits/auth_cubit.dart';
 import 'cubits/todos_cubit.dart';
-import 'data/services/api_service.dart';
+import 'data/services/hive_service.dart';
 import 'ui/login_screen.dart';
-
-void main() {
+import 'package:hive_flutter/hive_flutter.dart';
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  
+  // Open boxes for users and todos
+  await Hive.openBox('usersBox');
+  await Hive.openBox('todosBox');
+  await Hive.openBox('sessionBox');
   runApp(const MyApp());
 }
 
@@ -14,12 +21,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apiService = ApiService();
+    final LocalStorageService localStorageService = LocalStorageService();
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => AuthCubit(apiService)),
-        BlocProvider(create: (_) => TodosCubit(apiService)),
+        BlocProvider(create: (_) => AuthCubit(localStorageService)),
+        BlocProvider(create: (_) => TodosCubit(localStorageService)),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
