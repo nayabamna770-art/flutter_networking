@@ -1,47 +1,64 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/todo_model.dart';
-import '../data/services/api_service.dart';
+import '../data/services/hive_service.dart';
 import 'todos_state.dart';
 
 class TodosCubit extends Cubit<TodosState> {
-  final ApiService _apiService;
+  final LocalStorageService _hiveService;
 
-  TodosCubit(this._apiService) : super(TodosInitial());
+  TodosCubit(this._hiveService) : super(TodosInitial());
 
-  Future<void> loadTodos(String token) async {
+  Future<void> loadTodos() async {
+    if (isClosed) return;
     emit(TodosLoading());
     try {
-      final todos = await _apiService.fetchTodos(token);
+      final rawTodos = _hiveService.getTodos();
+      final todos = rawTodos.map((e) => TodoModel.fromMap(e)).toList();
+      
+      if (isClosed) return;
       emit(TodosLoaded(todos));
     } catch (e) {
-      emit(TodosError(e.toString()));
+      if (isClosed) return;
+      emit(TodosError(e.toString().replaceAll('Exception: ', '')));
     }
   }
 
-  Future<void> addTodo(String token, String title) async {
-    if (state is TodosLoaded) {
-      final currentTodos = (state as TodosLoaded).todos;
-      try {
-        final newTodo = await _apiService.addTodo(token, title);
-        emit(TodosLoaded([...currentTodos, newTodo]));
-      } catch (e) {
-        emit(TodosError('Failed to add todo'));
-      }
+  Future<void> addTodo(String title, String description) async {
+    if (isClosed) return;
+    try {
+      await _hiveService.addTodo(title, description);
+      
+      // Reload updated local list
+      await loadTodos();
+    } catch (e) {
+      if (isClosed) return;
+      emit(TodosError('Failed to add task'));
     }
   }
 
-  Future<void> deleteTodo(String token, String id) async {
-    if (state is TodosLoaded) {
-      final currentTodos = (state as TodosLoaded).todos;
-      try {
-        final success = await _apiService.deleteTodo(token, id);
-        if (success) {
-          final updatedTodos = currentTodos.where((t) => t.id != id).toList();
-          emit(TodosLoaded(updatedTodos));
-        }
-      } catch (e) {
-        emit(TodosError('Failed to delete todo'));
-      }
+  Future<void> deleteTodo(String id) async {
+    if (isClosed) return;
+    try {
+      await _hiveService.deleteTodo(id);
+      
+      // Reload updated local list
+      await loadTodos();
+    } catch (e) {
+      if (isClosed) return;
+      emit(TodosError('Failed to delete task'));
+    }
+  }
+
+  Future<void> toggleTodoStatus(String id) async {
+    if (isClosed) return;
+    try {
+      await _hiveService.toggleTodo(id);
+      
+      // Reload updated local list
+      await loadTodos();
+    } catch (e) {
+      if (isClosed) return;
+      emit(TodosError('Failed to update task status'));
     }
   }
 }

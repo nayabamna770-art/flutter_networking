@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/user_signup_model.dart';
-import '../data/services/api_service.dart';
+import '../data/services/hive_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final ApiService _apiService;
+  final LocalStorageService _hiveService;
 
-  AuthCubit(this._apiService) : super(AuthInitial());
+  AuthCubit(this._hiveService) : super(AuthInitial());
 
   Future<void> signUp({
     required String email,
@@ -15,24 +15,28 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) return;
     emit(AuthLoading());
 
-    final user = UserSignUpModel(
-      email: email,
-      password: password,
-    );
+    try {
+      final user = UserSignUpModel(
+        email: email,
+        password: password,
+      );
 
-    final result = await _apiService.signUp(user);
+      final result = await _hiveService.signUp(user);
 
-    // Guard against emitting state if cubit was closed while waiting for HTTP call
-    if (isClosed) return;
+      if (isClosed) return;
 
-    if (result['success'] == true) {
-      emit(AuthSuccess(
-        message: result['message'],
-        token: result['token'] ?? '',
-        data: result['data'],
-      ));
-    } else {
-      emit(AuthFailure(errorMessage: result['message']));
+      if (result['success'] == true) {
+        emit(AuthSuccess(
+          message: result['message'] ?? 'Account created successfully!',
+          token: result['token'] ?? '',
+          data: result['data'],
+        ));
+      } else {
+        emit(AuthFailure(errorMessage: result['message'] ?? 'Signup failed'));
+      }
+    } catch (e) {
+      if (isClosed) return;
+      emit(AuthFailure(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -43,18 +47,23 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) return;
     emit(AuthLoading());
 
-    final result = await _apiService.login(email, password);
+    try {
+      final result = await _hiveService.login(email, password);
 
-    if (isClosed) return;
+      if (isClosed) return;
 
-    if (result['success'] == true) {
-      emit(AuthSuccess(
-        message: result['message'],
-        token: result['token'] ?? '',
-        data: result['data'],
-      ));
-    } else {
-      emit(AuthFailure(errorMessage: result['message']));
+      if (result['success'] == true) {
+        emit(AuthSuccess(
+          message: result['message'] ?? 'Login successful!',
+          token: result['token'] ?? '',
+          data: result['data'],
+        ));
+      } else {
+        emit(AuthFailure(errorMessage: result['message'] ?? 'Login failed'));
+      }
+    } catch (e) {
+      if (isClosed) return;
+      emit(AuthFailure(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 }
