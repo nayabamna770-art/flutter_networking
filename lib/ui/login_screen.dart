@@ -4,7 +4,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../data/models/user_signup_model.dart';
 import '../data/services/hive_service.dart';
-import 'auth_state.dart';
+//import '../cubits/auth_cubit.dart';
+import '../cubits/auth_state.dart';
+//import 'signup_screen.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final LocalStorageService _hiveService;
