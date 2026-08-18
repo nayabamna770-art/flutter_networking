@@ -1,135 +1,91 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
-import '../data/models/user_signup_model.dart';
-import '../data/services/hive_service.dart';
-//import '../cubits/auth_cubit.dart';
+
+import '../cubits/auth_cubit.dart';
 import '../cubits/auth_state.dart';
-//import 'signup_screen.dart';
+import 'signup_screen.dart';
 
-class AuthCubit extends Cubit<AuthState> {
-  final LocalStorageService _hiveService;
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
-  AuthCubit(this._hiveService) : super(AuthInitial());
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
-  /// Web Application Client ID from Google Cloud Console (used as serverClientId on Android)
-  static const String _webClientId = 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  /// Email/Password Sign Up using Hive
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
-    if (isClosed) return;
-    emit(AuthLoading());
-
-    try {
-      final user = UserSignUpModel(
-        email: email,
-        password: password,
-      );
-
-      final result = await _hiveService.signUp(user);
-
-      if (isClosed) return;
-
-      if (result['success'] == true) {
-        emit(AuthSuccess(
-          message: result['message'] ?? 'Account created successfully!',
-          token: result['token'] ?? '',
-          data: result['data'],
-        ));
-      } else {
-        emit(AuthFailure(errorMessage: result['message'] ?? 'Signup failed'));
-      }
-    } catch (e) {
-      if (isClosed) return;
-      emit(AuthFailure(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
-    }
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
-  /// Email/Password Login using Hive
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
-    if (isClosed) return;
-    emit(AuthLoading());
-
-    try {
-      final result = await _hiveService.login(email, password);
-
-      if (isClosed) return;
-
-      if (result['success'] == true) {
-        emit(AuthSuccess(
-          message: result['message'] ?? 'Login successful!',
-          token: result['token'] ?? '',
-          data: result['data'],
-        ));
-      } else {
-        emit(AuthFailure(errorMessage: result['message'] ?? 'Login failed'));
-      }
-    } catch (e) {
-      if (isClosed) return;
-      emit(AuthFailure(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
-    }
-  }
-
-  /// Google Sign-In with Supabase
-  Future<void> signInWithGoogle() async {
-    if (isClosed) return;
-    emit(AuthLoading());
-
-    try {
-      // Handle Web redirect flow
-      if (kIsWeb) {
-        await Supabase.instance.client.auth.signInWithOAuth(
-          OAuthProvider.google,
-        );
-        return;
-      }
-
-      // Handle Android/iOS Native flow
-      final googleSignIn = GoogleSignIn.instance;
-
-      try {
-        await googleSignIn.initialize(
-          serverClientId: _webClientId,
-        );
-      } catch (_) {}
-
-      final googleUser = await googleSignIn.authenticate();
-      final googleAuth = googleUser.authentication;
-      final idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        throw Exception('No ID Token found from Google Sign-In.');
-      }
-
-      final response = await Supabase.instance.client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-      );
-
-      if (isClosed) return;
-
-      if (response.user != null) {
-        emit(AuthSuccess(
-          message: 'Google Sign-In successful!',
-          token: response.session?.accessToken ?? '',
-          data: response.user,
-        ));
-      } else {
-        emit(AuthFailure(errorMessage: 'Google Sign-In failed'));
-      }
-    } catch (e) {
-      if (isClosed) return;
-      emit(AuthFailure(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocConsumer<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state is AuthSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          } else if (state is AuthFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage)),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<AuthCubit>().login(
+                          email: _emailController.text,
+                          password: _passwordController.text,
+                        );
+                  },
+                  child: const Text('Login'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () {
+                    context.read<AuthCubit>().signInWithGoogle();
+                  },
+                  child: const Text('Continue with Google'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SignupScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text("Don't have an account? Sign Up"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 }

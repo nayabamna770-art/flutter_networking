@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
-import 'cubits/auth_cubit.dart';
+import 'cubits/auth_cubit.dart' as app_auth;
 import 'data/services/hive_service.dart';
 import 'ui/login_screen.dart';
 
@@ -21,9 +20,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthCubit(hiveService),
-      child: MaterialApp(
+    return BlocProvider<app_auth.AuthCubit>(
+      create: (context) => app_auth.AuthCubit(hiveService),
+      child: const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: LoginScreen(),
       ),
