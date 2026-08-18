@@ -12,18 +12,18 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthSuccess extends AuthState {
-  final String token;
   final String message;
-  final Map<String, dynamic>? data;
+  final String token;
+  final dynamic data;
+
   const AuthSuccess({
-    required this.token,
     required this.message,
+    required this.token,
     this.data,
   });
 
-  // Equatable uses these props to check value equality
   @override
-  List<Object?> get props => [token, message, data];
+  List<Object?> get props => [message, token, data];
 }
 
 class AuthFailure extends AuthState {
