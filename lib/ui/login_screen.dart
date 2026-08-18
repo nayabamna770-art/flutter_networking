@@ -99,28 +99,78 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 24),
                           state is AuthLoading
                               ? const CircularProgressIndicator()
-                              : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(48),
-                                    backgroundColor: Colors.deepPurple,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                              : Column(
+                                  children: [
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize:
+                                            const Size.fromHeight(48),
+                                        backgroundColor: Colors.deepPurple,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        final email =
+                                            _emailController.text.trim();
+                                        final password =
+                                            _passwordController.text.trim();
+                                        if (email.isNotEmpty &&
+                                            password.isNotEmpty) {
+                                          context.read<AuthCubit>().login(
+                                                email: email,
+                                                password: password,
+                                              );
+                                        }
+                                      },
+                                      child: const Text('Login'),
                                     ),
-                                  ),
-                                  onPressed: () {
-                                    final email = _emailController.text.trim();
-                                    final password =
-                                        _passwordController.text.trim();
-                                    if (email.isNotEmpty &&
-                                        password.isNotEmpty) {
-                                      context.read<AuthCubit>().login(
-                                            email: email,
-                                            password: password,
-                                          );
-                                    }
-                                  },
-                                  child: const Text('Login'),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: const [
+                                        Expanded(child: Divider()),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 8.0),
+                                          child: Text(
+                                            'OR',
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12),
+                                          ),
+                                        ),
+                                        Expanded(child: Divider()),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        minimumSize:
+                                            const Size.fromHeight(48),
+                                        side: const BorderSide(
+                                            color: Colors.deepPurple),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.g_mobiledata,
+                                          size: 28, color: Colors.deepPurple),
+                                      label: const Text(
+                                        'Continue with Google',
+                                        style: TextStyle(
+                                            color: Colors.deepPurple,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      onPressed: () {
+                                        context
+                                            .read<AuthCubit>()
+                                            .signInWithGoogle();
+                                      },
+                                    ),
+                                  ],
                                 ),
                           const SizedBox(height: 12),
                           TextButton(
