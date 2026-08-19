@@ -43,7 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomPaint(
-        painter: VibrantMeshPainter(),
+        painter: DynamicBackgroundPainter(),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(

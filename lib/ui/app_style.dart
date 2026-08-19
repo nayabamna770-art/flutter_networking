@@ -2,142 +2,84 @@
 import 'package:flutter/material.dart';
 
 class AppStyles {
-  // Color Theory Palette: Midnight Indigo + Vibrant Violet + Amber Accent
-  static const Color primaryDark = Color(0xFF0F172A); // Deep Slate Indigo
-  static const Color primaryViolet = Color(0xFF4F46E5); // Electric Indigo
-  static const Color accentAmber = Color(0xFFF59E0B); // Amber Gold
-  static const Color backgroundColor = Color(0xFFF1F5F9); // Cool Slate Canvas
-  static const Color surfaceColor = Colors.white;
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color borderLight = Color(0xFFE2E8F0);
+  // Palette Colors
+  static const Color primaryDark = Color(0xFF1E293B);      
+  static const Color primaryViolet = Color(0xFF818CF8);    
+  static const Color accentCyan = Color(0xFF22D3EE);      
+  static const Color accentAmber = Color(0xFFFBBF24);     
+  
+  static const Color backgroundColor = Color(0xFF0F172A); 
+  static const Color cardSurface = Color(0xFF334155);     
+  
+  static const Color textPrimary = Color(0xFFFFFFFF);     
+  static const Color textSecondary = Color(0xFFCBD5E1);   
+  static const Color borderLight = Color(0xFF475569);     
 
+  // Fixes: AppStyles.theme error in main.dart
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
       scaffoldBackgroundColor: backgroundColor,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryViolet,
+      colorScheme: const ColorScheme.dark(
         primary: primaryViolet,
-        secondary: accentAmber,
-        surface: surfaceColor,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          color: textPrimary,
-        ),
-        iconTheme: IconThemeData(color: textPrimary),
+        secondary: accentCyan,
+        surface: cardSurface,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
+        fillColor: const Color(0xFF1E293B),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         hintStyle: const TextStyle(color: textSecondary, fontSize: 14),
         labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: borderLight, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: borderLight, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryViolet, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
       ),
     );
   }
 
-  // Elevated Card with Soft Tint Border
-  static Widget buildCardContainer({
-    required Widget child,
-    EdgeInsetsGeometry? padding,
-    VoidCallback? onTap,
-  }) {
-    return CustomPaint(
-      painter: CardAccentPainter(),
-      child: Container(
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: borderLight.withValues(alpha: 0.8),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: primaryDark.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: onTap,
-            child: Padding(
-              padding: padding ?? const EdgeInsets.all(20),
-              child: child,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Gradient Action Button
+  // Fixes: AppStyles.buildPrimaryButton error
   static Widget buildPrimaryButton({
     required String text,
     required VoidCallback? onPressed,
     bool isLoading = false,
   }) {
     return Container(
-      height: 52,
+      height: 54,
+      width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
-          colors: [primaryViolet, Color(0xFF6366F1)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          colors: [primaryViolet, Color(0xFF6366F1), accentCyan],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryViolet.withValues(alpha: 0.35),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: primaryViolet.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: isLoading
             ? const SizedBox(
                 height: 22,
                 width: 22,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.5,
-                ),
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
               )
             : Text(
                 text,
@@ -145,14 +87,48 @@ class AppStyles {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  letterSpacing: 0.2,
+                  letterSpacing: 0.3,
                 ),
               ),
       ),
     );
   }
 
-  // Header Title
+  // Fixes: AppStyles.buildCardContainer error
+  static Widget buildCardContainer({
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderLight, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(20),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Fixes: AppStyles.buildHeaderTitle error
   static Widget buildHeaderTitle(String title, {String? subtitle}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +143,7 @@ class AppStyles {
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             subtitle,
             style: const TextStyle(
@@ -182,145 +158,24 @@ class AppStyles {
   }
 }
 
-// Organic Mesh Gradient Background
+// Fixes: DynamicBackgroundPainter error in login, signup, and todo screens
 class DynamicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
 
-    // Soft base ambient gradient
-    final baseGradient = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFEEF2FF), // Very soft Indigo tint
-          Color(0xFFF1F5F9), // Slate tint
-          Color(0xFFFFFBEB), // Soft Amber warm glow
-        ],
-      ).createShader(rect);
-
-    canvas.drawRect(rect, baseGradient);
-
-    // Glowing organic shape top-right
-    final paint1 = Paint()
-      ..color = AppStyles.primaryViolet.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
-    canvas.drawCircle(
-      Offset(size.width * 0.85, size.height * 0.15),
-      160,
-      paint1,
-    );
-
-    // Glowing warm accent bottom-left
-    final paint2 = Paint()
-      ..color = AppStyles.accentAmber.withValues(alpha: 0.15)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
-    canvas.drawCircle(
-      Offset(size.width * 0.15, size.height * 0.85),
-      180,
-      paint2,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-// lib/ui/app_styles.dart
-
-// ... (keep your existing AppStyles class and color definitions above) ...
-
-// 1. Organic Mesh Background with Canvas Blend Modes
-class VibrantMeshPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-
-    // Base Gradient
-    final basePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFEEF2FF), Color(0xFFF1F5F9)],
-      ).createShader(rect);
+    final basePaint = Paint()..color = AppStyles.backgroundColor;
     canvas.drawRect(rect, basePaint);
 
-    // Blended Glow Circle (Top Right)
-    final glowPaint1 = Paint()
-      ..color = AppStyles.primaryViolet.withValues(alpha: 0.25)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60)
-      ..blendMode = BlendMode.multiply;
-    canvas.drawCircle(
-      Offset(size.width * 0.9, size.height * 0.1),
-      180,
-      glowPaint1,
-    );
+    final cyanGlow = Paint()
+      ..color = AppStyles.accentCyan.withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
+    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.1), 200, cyanGlow);
 
-    // Accent Glow Circle (Bottom Left)
-    final glowPaint2 = Paint()
-      ..color = AppStyles.accentAmber.withValues(alpha: 0.20)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 70)
-      ..blendMode = BlendMode.screen;
-    canvas.drawCircle(
-      Offset(size.width * 0.1, size.height * 0.85),
-      200,
-      glowPaint2,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// 2. Decorative Canvas Accent for Card Backings
-class CardAccentPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          AppStyles.primaryViolet.withValues(alpha: 0.12),
-          AppStyles.primaryViolet.withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final path = Path()
-      ..moveTo(size.width * 0.6, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(size.width * 0.8, size.height)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// 3. Top Curved Wave Header Canvas
-class HeaderWavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = const LinearGradient(
-        colors: [AppStyles.primaryViolet, Color(0xFF6366F1)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final path = Path()
-      ..lineTo(0, size.height * 0.8)
-      ..quadraticBezierTo(
-        size.width * 0.5,
-        size.height,
-        size.width,
-        size.height * 0.8,
-      )
-      ..lineTo(size.width, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
+    final violetGlow = Paint()
+      ..color = AppStyles.primaryViolet.withValues(alpha: 0.30)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 90);
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.8), 220, violetGlow);
   }
 
   @override

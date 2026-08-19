@@ -31,9 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthCubit>().login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
   }
 
@@ -44,14 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // PLACED HERE: The Stack wraps your whole body layout
       body: Stack(
         children: [
           // 1. Top Curved Canvas Banner Background
           SizedBox(
             height: 260,
             width: double.infinity,
-            child: CustomPaint(painter: HeaderWavePainter()),
+            child: CustomPaint(painter: DynamicBackgroundPainter()),
           ),
 
           // 2. Foreground Scrollable Form Card
@@ -96,9 +95,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             AppStyles.buildHeaderTitle(
-                                  'Welcome Back 👋',
-                                  subtitle: 'Sign in to access your dashboard',
-                                )
+                              'Welcome Back 👋',
+                              subtitle: 'Sign in to access your dashboard',
+                            )
                                 .animate()
                                 .fade(duration: 400.ms)
                                 .slideY(
@@ -110,20 +109,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 28),
 
                             TextFormField(
-                                  controller: _emailController,
-                                  keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email Address',
-                                    prefixIcon: Icon(
-                                      Icons.mail_outline_rounded,
-                                      color: AppStyles.primaryViolet,
-                                    ),
-                                  ),
-                                  validator: (val) =>
-                                      val == null || !val.contains('@')
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Email Address',
+                                prefixIcon: Icon(
+                                  Icons.mail_outline_rounded,
+                                  color: AppStyles.primaryViolet,
+                                ),
+                              ),
+                              validator: (val) =>
+                                  val == null || !val.contains('@')
                                       ? 'Enter a valid email'
                                       : null,
-                                )
+                            )
                                 .animate()
                                 .fade(delay: 100.ms, duration: 400.ms)
                                 .slideX(begin: -0.05, end: 0),
@@ -131,20 +130,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 16),
 
                             TextFormField(
-                                  controller: _passwordController,
-                                  obscureText: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Password',
-                                    prefixIcon: Icon(
-                                      Icons.lock_outline_rounded,
-                                      color: AppStyles.primaryViolet,
-                                    ),
-                                  ),
-                                  validator: (val) =>
-                                      val == null || val.length < 6
+                              controller: _passwordController,
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: AppStyles.primaryViolet,
+                                ),
+                              ),
+                              validator: (val) =>
+                                  val == null || val.length < 6
                                       ? 'Minimum 6 characters'
                                       : null,
-                                )
+                            )
                                 .animate()
                                 .fade(delay: 200.ms, duration: 400.ms)
                                 .slideX(begin: -0.05, end: 0),
@@ -152,15 +151,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 24),
 
                             SizedBox(
-                                  width: double.infinity,
-                                  child: AppStyles.buildPrimaryButton(
-                                    text: 'Log In',
-                                    isLoading: isLoading,
-                                    onPressed: isLoading
-                                        ? null
-                                        : _onLoginPressed,
-                                  ),
-                                )
+                              width: double.infinity,
+                              child: AppStyles.buildPrimaryButton(
+                                text: 'Log In',
+                                isLoading: isLoading,
+                                onPressed: isLoading ? null : _onLoginPressed,
+                              ),
+                            )
                                 .animate()
                                 .fade(delay: 300.ms, duration: 400.ms)
                                 .scale(begin: const Offset(0.96, 0.96)),
@@ -191,45 +188,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             const SizedBox(height: 20),
 
+                            // Google Sign-In Button
                             SizedBox(
-                                  width: double.infinity,
-                                  height: 52,
-                                  child: OutlinedButton.icon(
-                                    onPressed: isLoading
-                                        ? null
-                                        : _onGoogleSignInPressed,
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: AppStyles.borderLight,
-                                        width: 1.5,
-                                      ),
-                                      backgroundColor: const Color(0xFFF8FAFC),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
+                              width: double.infinity,
+                              height: 52,
+                              child: OutlinedButton(
+                                onPressed:
+                                    isLoading ? null : _onGoogleSignInPressed,
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
+                                    width: 1.5,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.g_mobiledata_rounded,
+                                      color: Color(0xFF4285F4),
+                                      size: 32,
                                     ),
-                                    icon: Image.network(
-                                      'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-                                      height: 20,
-                                      width: 20,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
-                                                Icons.g_mobiledata_rounded,
-                                                size: 28,
-                                                color: AppStyles.primaryViolet,
-                                              ),
-                                    ),
-                                    label: const Text(
+                                    SizedBox(width: 8),
+                                    Text(
                                       'Continue with Google',
                                       style: TextStyle(
+                                        color: Color(0xFF0F172A),
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: AppStyles.textPrimary,
                                       ),
                                     ),
-                                  ),
-                                )
+                                  ],
+                                ),
+                              ),
+                            )
                                 .animate()
                                 .fade(delay: 400.ms, duration: 400.ms)
                                 .scale(begin: const Offset(0.96, 0.96)),

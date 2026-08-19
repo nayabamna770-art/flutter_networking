@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user_signup_model.dart';
-
+import '../models/todo_model.dart';
 class LocalStorageService {
   Box get _usersBox => Hive.box('users');
   Box get _todosBox => Hive.box('todos');
@@ -93,4 +93,12 @@ class LocalStorageService {
   Future<void> deleteTodo(String id) async {
     await _todosBox.delete(id);
   }
+  // Add this inside your LocalStorageService class
+Future<void> saveAllTodos(List<TodoModel> todos) async {
+  final box = Hive.box('todos_box'); // Use your actual box name
+  await box.clear();
+  for (var todo in todos) {
+    await box.put(todo.id, todo.toJson());
+  }
+}
 }

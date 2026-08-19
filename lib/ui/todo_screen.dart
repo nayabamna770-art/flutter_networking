@@ -1,7 +1,10 @@
 // lib/ui/todo_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../cubits/auth_cubit.dart';
+import '../cubits/auth_state.dart';
 import '../cubits/todos_cubit.dart';
 import '../cubits/todos_state.dart';
 import 'app_style.dart';
@@ -15,298 +18,281 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    context.read<TodosCubit>().loadTodos();
-  }
+  final TextEditingController _taskController = TextEditingController();
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
+    _taskController.dispose();
     super.dispose();
   }
 
   void _showAddTodoDialog() {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AppStyles.surfaceColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-            top: 28,
-            left: 24,
-            right: 24,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppStyles.cardSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppStyles.buildHeaderTitle(
-                'New Task',
-                subtitle: 'What do you plan to complete?',
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _titleController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Task Title',
-                  prefixIcon: Icon(
-                    Icons.check_circle_outline,
-                    color: AppStyles.primaryViolet,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  hintText: 'Description (optional)',
-                  prefixIcon: Icon(
-                    Icons.notes_rounded,
-                    color: AppStyles.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: AppStyles.buildPrimaryButton(
-                  text: 'Save Task',
-                  onPressed: () {
-                    final title = _titleController.text.trim();
-                    final description = _descriptionController.text.trim();
-                    if (title.isNotEmpty) {
-                      context.read<TodosCubit>().addTodo(title, description);
-                      _titleController.clear();
-                      _descriptionController.clear();
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                ),
-              ),
-            ],
+          title: const Text(
+            'Add New Task',
+            style: TextStyle(color: AppStyles.textPrimary),
           ),
+          content: TextField(
+            controller: _taskController,
+            autofocus: true,
+            style: const TextStyle(color: AppStyles.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'What needs to be done?',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _taskController.clear();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppStyles.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppStyles.primaryViolet,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                final title = _taskController.text.trim();
+                if (title.isNotEmpty) {
+                  // Updated to use the state's existing _taskController
+                  context.read<TodosCubit>().addTodo(title);
+                  _taskController.clear();
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: const Text(
+                'Add Task',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Future<void> _logout() async {
-    await context.read<AuthCubit>().signOut();
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Tasks ✨'),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppStyles.surfaceColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppStyles.borderLight),
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.logout_rounded,
-                color: AppStyles.textPrimary,
-                size: 20,
-              ),
-              tooltip: 'Logout',
-              onPressed: _logout,
-            ),
-          ),
-        ],
-      ),
-      body: CustomPaint(
-        painter: VibrantMeshPainter(),
-        child: SafeArea(
-          child: BlocConsumer<TodosCubit, TodosState>(
-            listener: (context, state) {
-              if (state is TodosError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              }
-            },
-            builder: (context, state) {
-              if (state is TodosLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: AppStyles.primaryViolet,
-                  ),
-                );
-              }
-
-              if (state is TodosLoaded) {
-                if (state.todos.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppStyles.primaryViolet.withValues(
-                              alpha: 0.1,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.task_alt_rounded,
-                            size: 52,
-                            color: AppStyles.primaryViolet,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No active tasks',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppStyles.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Tap the button below to add your first task',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppStyles.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthInitial) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
+        body: CustomPaint(
+          painter: DynamicBackgroundPainter(),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header Bar
+                Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20.0,
-                    vertical: 12.0,
+                    vertical: 16.0,
                   ),
-                  itemCount: state.todos.length,
-                  itemBuilder: (context, index) {
-                    final todo = state.todos[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: AppStyles.buildCardContainer(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AppStyles.buildHeaderTitle(
+                        'My Tasks 📝',
+                        subtitle: 'Organize your daily routine',
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: AppStyles.textSecondary,
+                          size: 26,
                         ),
-                        child: Row(
-                          children: [
-                            Transform.scale(
-                              scale: 1.1,
-                              child: Checkbox(
-                                value: todo.isCompleted,
-                                activeColor: AppStyles.accentAmber,
-                                checkColor: AppStyles.primaryDark,
-                                side: const BorderSide(
-                                  color: AppStyles.textSecondary,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                onChanged: (_) {
-                                  context.read<TodosCubit>().toggleTodoStatus(
-                                    todo.id,
-                                  );
-                                },
-                              ),
+                        onPressed: () {
+                          context.read<AuthCubit>().signOut();
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    todo.title,
-                                    style: TextStyle(
-                                      decoration: todo.isCompleted
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                      color: todo.isCompleted
-                                          ? AppStyles.textSecondary
-                                          : AppStyles.textPrimary,
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Todo List Builder
+                Expanded(
+                  child: BlocBuilder<TodosCubit, TodosState>(
+                    builder: (context, state) {
+                      if (state is TodosLoading) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: AppStyles.primaryViolet,
+                          ),
+                        );
+                      }
+
+                      if (state is TodosLoaded) {
+                        if (state.todos.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.task_alt_rounded,
+                                  size: 64,
+                                  color: AppStyles.textSecondary,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No tasks yet!',
+                                  style: TextStyle(
+                                    color: AppStyles.textSecondary,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ).animate().fade().scale(),
+                          );
+                        }
+
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                          itemCount: state.todos.length,
+                          itemBuilder: (context, index) {
+                            final todo = state.todos[index];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: AppStyles.buildCardContainer(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () {
+                                    context
+                                        .read<TodosCubit>()
+                                        .toggleTodoStatus(
+                                          todo.id,
+                                          todo.isCompleted,
+                                        );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical:
+                                          MediaQuery.of(
+                                            context,
+                                          ).size.height *
+                                          0.01,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Theme(
+                                          data: ThemeData(
+                                            unselectedWidgetColor:
+                                                AppStyles.borderLight,
+                                          ),
+                                          child: Checkbox(
+                                            value: todo.isCompleted,
+                                            activeColor: AppStyles.primaryViolet,
+                                            checkColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            onChanged: (bool? newValue) {
+                                              context
+                                                  .read<TodosCubit>()
+                                                  .toggleTodoStatus(
+                                                    todo.id,
+                                                    todo.isCompleted,
+                                                  );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            todo.title,
+                                            style: TextStyle(
+                                              color: todo.isCompleted
+                                                  ? AppStyles.textSecondary
+                                                  : AppStyles.textPrimary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              decoration: todo.isCompleted
+                                                  ? TextDecoration.lineThrough
+                                                  : TextDecoration.none,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: Colors.redAccent,
+                                            size: 22,
+                                          ),
+                                          onPressed: () {
+                                            context
+                                                .read<TodosCubit>()
+                                                .deleteTodo(todo.id);
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  if (todo.description.isNotEmpty) ...[
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      todo.description,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: todo.isCompleted
-                                            ? AppStyles.textSecondary
-                                                  .withValues(alpha: 0.6)
-                                            : AppStyles.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                color: Colors.redAccent,
-                                size: 22,
-                              ),
-                              onPressed: () {
-                                context.read<TodosCubit>().deleteTodo(todo.id);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              }
+                            )
+                                .animate()
+                                .fade(duration: 300.ms)
+                                .slideY(begin: 0.1, end: 0);
+                          },
+                        );
+                      }
 
-              return const SizedBox.shrink();
-            },
+                      return const SizedBox();
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddTodoDialog,
-        backgroundColor: AppStyles.primaryViolet,
-        elevation: 6,
-        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
-        label: const Text(
-          'New Task',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _showAddTodoDialog,
+          backgroundColor: AppStyles.primaryViolet,
+          elevation: 6,
+          icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
+          label: const Text(
+            'New Task',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
           ),
         ),
       ),
