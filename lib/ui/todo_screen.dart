@@ -1,11 +1,11 @@
+// lib/ui/todo_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../cubits/auth_cubit.dart';
 import '../cubits/todos_cubit.dart';
 import '../cubits/todos_state.dart';
+import 'app_style.dart';
 import 'login_screen.dart';
-import 'widgets/background_painter.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -36,6 +36,9 @@ class _TodoScreenState extends State<TodoScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text('Add New Task'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -86,7 +89,7 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _logout() async {
-    await Supabase.instance.client.auth.signOut();
+    await context.read<AuthCubit>().signOut();
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -99,22 +102,19 @@ class _TodoScreenState extends State<TodoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Offline Tasks'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+        title: AppStyles.buildShaderText('My Tasks'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',
             onPressed: _logout,
           ),
         ],
       ),
-      extendBodyBehindAppBar: true,
       body: CustomPaint(
-        painter: HeaderBackgroundPainter(
-          primaryColor: Colors.deepPurple,
-          secondaryColor: Colors.purpleAccent,
+        painter: WavesBackgroundPainter(
+          primaryColor: AppStyles.primaryColor,
+          secondaryColor: AppStyles.accentColor,
         ),
         child: SafeArea(
           child: BlocConsumer<TodosCubit, TodosState>(
@@ -123,7 +123,7 @@ class _TodoScreenState extends State<TodoScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Colors.redAccent,
                   ),
                 );
               }
@@ -135,10 +135,16 @@ class _TodoScreenState extends State<TodoScreen> {
 
               if (state is TodosLoaded) {
                 if (state.todos.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No tasks yet. Tap + to add one!',
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                  return Center(
+                    child: AppStyles.buildGlassContainer(
+                      child: const Text(
+                        'No tasks yet. Tap + to add one!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -148,43 +154,47 @@ class _TodoScreenState extends State<TodoScreen> {
                   itemCount: state.todos.length,
                   itemBuilder: (context, index) {
                     final todo = state.todos[index];
-                    return Card(
-                      elevation: 3,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ListTile(
-                        leading: Checkbox(
-                          value: todo.isCompleted,
-                          activeColor: Colors.deepPurple,
-                          onChanged: (_) {
-                            context
-                                .read<TodosCubit>()
-                                .toggleTodoStatus(todo.id);
-                          },
-                        ),
-                        title: Text(
-                          todo.title,
-                          style: TextStyle(
-                            decoration: todo.isCompleted
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                            fontWeight: FontWeight.bold,
-                            color: todo.isCompleted
-                                ? Colors.grey
-                                : Colors.black87,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: AppStyles.buildGlassContainer(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          leading: Checkbox(
+                            value: todo.isCompleted,
+                            activeColor: AppStyles.primaryColor,
+                            onChanged: (_) {
+                              context.read<TodosCubit>().toggleTodoStatus(
+                                todo.id,
+                              );
+                            },
                           ),
-                        ),
-                        subtitle: todo.description.isNotEmpty
-                            ? Text(todo.description)
-                            : null,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.redAccent),
-                          onPressed: () {
-                            context.read<TodosCubit>().deleteTodo(todo.id);
-                          },
+                          title: Text(
+                            todo.title,
+                            style: TextStyle(
+                              decoration: todo.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              fontWeight: FontWeight.bold,
+                              color: todo.isCompleted
+                                  ? Colors.white54
+                                  : Colors.white,
+                            ),
+                          ),
+                          subtitle: todo.description.isNotEmpty
+                              ? Text(
+                                  todo.description,
+                                  style: const TextStyle(color: Colors.white70),
+                                )
+                              : null,
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
+                            onPressed: () {
+                              context.read<TodosCubit>().deleteTodo(todo.id);
+                            },
+                          ),
                         ),
                       ),
                     );
@@ -199,7 +209,7 @@ class _TodoScreenState extends State<TodoScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTodoDialog,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: AppStyles.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
