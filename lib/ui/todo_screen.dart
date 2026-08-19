@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../cubits/todos_cubit.dart';
 import '../cubits/todos_state.dart';
+import 'login_screen.dart';
 import 'widgets/background_painter.dart';
 
 class TodoScreen extends StatefulWidget {
@@ -18,7 +21,6 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   void initState() {
     super.initState();
-    // Load local tasks for current session
     context.read<TodosCubit>().loadTodos();
   }
 
@@ -69,7 +71,6 @@ class _TodoScreenState extends State<TodoScreen> {
                 final title = _titleController.text.trim();
                 final description = _descriptionController.text.trim();
                 if (title.isNotEmpty) {
-                  // CREATE action
                   context.read<TodosCubit>().addTodo(title, description);
                   _titleController.clear();
                   _descriptionController.clear();
@@ -84,6 +85,16 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
+  Future<void> _logout() async {
+    await Supabase.instance.client.auth.signOut();
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,6 +102,13 @@ class _TodoScreenState extends State<TodoScreen> {
         title: const Text('My Offline Tasks'),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: _logout,
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: CustomPaint(
@@ -103,7 +121,10 @@ class _TodoScreenState extends State<TodoScreen> {
             listener: (context, state) {
               if (state is TodosError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
                 );
               }
             },
@@ -134,7 +155,6 @@ class _TodoScreenState extends State<TodoScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
-                        // TOGGLE STATUS action
                         leading: Checkbox(
                           value: todo.isCompleted,
                           activeColor: Colors.deepPurple,
@@ -159,7 +179,6 @@ class _TodoScreenState extends State<TodoScreen> {
                         subtitle: todo.description.isNotEmpty
                             ? Text(todo.description)
                             : null,
-                        // DELETE action
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline,
                               color: Colors.redAccent),

@@ -2,123 +2,95 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user_signup_model.dart';
 
 class LocalStorageService {
-  // Use getters to safely fetch boxes after Hive initializes
   Box get _usersBox => Hive.box('users');
   Box get _todosBox => Hive.box('todos');
-  Box get _sessionBox => Hive.box('session');
 
-  // Helper to sanitize keys consistently
-  String _formatKey(String key) => key.trim().toLowerCase();
+  // ================= AUTHENTICATION =================
 
-  // Sign Up: Accepts UserSignUpModel and returns Map<String, dynamic>
+  /// Handles local email/password sign-up
   Future<Map<String, dynamic>> signUp(UserSignUpModel user) async {
-    final cleanEmail = _formatKey(user.email);
-    final cleanPassword = user.password.trim();
-
-    if (_usersBox.containsKey(cleanEmail)) {
+    // Check if user already exists
+    final existingUser = _usersBox.get(user.email);
+    if (existingUser != null) {
       return {
         'success': false,
-        'message': 'User already registered!',
+        'message': 'User with this email already exists!',
       };
     }
 
-    // Save plain sanitized key and value
-    await _usersBox.put(cleanEmail, cleanPassword);
-    await _sessionBox.put('active_user', cleanEmail);
+    // Store user credentials locally
+    final userData = {
+      'email': user.email,
+      'password': user.password,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    await _usersBox.put(user.email, userData);
 
     return {
       'success': true,
       'message': 'Account created successfully!',
-      'token': 'local_token_$cleanEmail',
-      'data': {'email': cleanEmail},
+      'token': 'local_token_${DateTime.now().millisecondsSinceEpoch}',
+      'data': userData,
     };
   }
 
-  // Login: Returns Map<String, dynamic>
+  /// Handles local email/password login
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final cleanEmail = _formatKey(email);
-    final cleanPassword = password.trim();
+    final userData = _usersBox.get(email);
 
-    final storedPassword = _usersBox.get(cleanEmail);
-
-    if (storedPassword == null || storedPassword.toString() != cleanPassword) {
+    if (userData == null) {
       return {
         'success': false,
-        'message': 'Invalid email or password',
+        'message': 'No account found with this email.',
       };
     }
 
-    await _sessionBox.put('active_user', cleanEmail);
+    final userMap = Map<String, dynamic>.from(userData as Map);
+
+    if (userMap['password'] != password) {
+      return {
+        'success': false,
+        'message': 'Invalid password.',
+      };
+    }
 
     return {
       'success': true,
       'message': 'Login successful!',
-      'token': 'local_token_$cleanEmail',
-      'data': {'email': cleanEmail},
+      'token': 'local_token_${DateTime.now().millisecondsSinceEpoch}',
+      'data': userMap,
     };
   }
 
-  // Get Current Logged-In User
-  String? getActiveUser() {
-    final rawUser = _sessionBox.get('active_user');
-    return rawUser != null ? _formatKey(rawUser.toString()) : null;
+  // ================= TODOS MANAGEMENT =================
+
+  List<dynamic> getTodos() {
+    return _todosBox.values.toList();
   }
 
-  // Logout
-  Future<void> logout() async {
-    await _sessionBox.delete('active_user');
-  }
-
-  // Fetch To-Dos
-  List<Map<String, dynamic>> getTodos() {
-    final activeUser = getActiveUser();
-    if (activeUser == null) return [];
-
-    final rawList = _todosBox.get(activeUser, defaultValue: []);
-    return (rawList as List)
-        .map((e) => Map<String, dynamic>.from(e as Map))
-        .toList();
-  }
-
-  // Add To-Do
   Future<void> addTodo(String title, String description) async {
-    final activeUser = getActiveUser();
-    if (activeUser == null) throw Exception('No active session!');
-
-    final todos = getTodos();
-    final newTodo = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': title.trim(),
-      'description': description.trim(),
-      'is_completed': false,
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final todoData = {
+      'id': id,
+      'title': title,
+      'description': description,
+      'isCompleted': false,
     };
-
-    todos.add(newTodo);
-    await _todosBox.put(activeUser, todos);
+    await _todosBox.put(id, todoData);
   }
 
-  // Delete To-Do
-  Future<void> deleteTodo(String id) async {
-    final activeUser = getActiveUser();
-    if (activeUser == null) return;
-
-    final todos = getTodos();
-    todos.removeWhere((todo) => todo['id'] == id);
-    await _todosBox.put(activeUser, todos);
-  }
-
-  // Toggle To-Do Status
   Future<void> toggleTodo(String id) async {
-    final activeUser = getActiveUser();
-    if (activeUser == null) return;
-
-    final todos = getTodos();
-    for (var todo in todos) {
-      if (todo['id'] == id) {
-        todo['is_completed'] = !(todo['is_completed'] as bool);
-        break;
-      }
+    final todoData = _todosBox.get(id);
+    if (todoData != null) {
+      final updatedData = Map<String, dynamic>.from(todoData as Map);
+      updatedData['isCompleted'] =
+          !(updatedData['isCompleted'] as bool? ?? false);
+      await _todosBox.put(id, updatedData);
     }
-    await _todosBox.put(activeUser, todos);
+  }
+
+  Future<void> deleteTodo(String id) async {
+    await _todosBox.delete(id);
   }
 }

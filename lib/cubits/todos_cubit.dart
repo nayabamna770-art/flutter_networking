@@ -13,8 +13,13 @@ class TodosCubit extends Cubit<TodosState> {
     emit(TodosLoading());
     try {
       final rawTodos = _hiveService.getTodos();
-      final todos = rawTodos.map((e) => TodoModel.fromMap(e)).toList();
       
+      // Safely convert Map<dynamic, dynamic> to Map<String, dynamic> for Web compatibility
+      final todos = rawTodos.map((e) {
+        final Map<String, dynamic> formattedMap = Map<String, dynamic>.from(e as Map);
+        return TodoModel.fromMap(formattedMap);
+      }).toList();
+
       if (isClosed) return;
       emit(TodosLoaded(todos));
     } catch (e) {
@@ -32,7 +37,7 @@ class TodosCubit extends Cubit<TodosState> {
       await loadTodos();
     } catch (e) {
       if (isClosed) return;
-      emit(TodosError('Failed to add task'));
+      emit(TodosError('Failed to add task: ${e.toString()}'));
     }
   }
 
@@ -45,7 +50,7 @@ class TodosCubit extends Cubit<TodosState> {
       await loadTodos();
     } catch (e) {
       if (isClosed) return;
-      emit(TodosError('Failed to delete task'));
+      emit(TodosError('Failed to delete task: ${e.toString()}'));
     }
   }
 
@@ -58,7 +63,7 @@ class TodosCubit extends Cubit<TodosState> {
       await loadTodos();
     } catch (e) {
       if (isClosed) return;
-      emit(TodosError('Failed to update task status'));
+      emit(TodosError('Failed to update task status: ${e.toString()}'));
     }
   }
 }
