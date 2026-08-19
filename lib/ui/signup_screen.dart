@@ -1,5 +1,6 @@
 // lib/ui/signup_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/auth_cubit.dart';
@@ -18,8 +19,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -33,9 +33,9 @@ class _SignupScreenState extends State<SignupScreen> {
   void _onSignUpPressed() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthCubit>().signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
   }
 
@@ -43,10 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomPaint(
-        painter: WavesBackgroundPainter(
-          primaryColor: AppStyles.primaryColor,
-          secondaryColor: AppStyles.accentColor,
-        ),
+        painter: VibrantMeshPainter(),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -57,7 +54,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
-                        backgroundColor: Colors.green,
+                        backgroundColor: AppStyles.primaryViolet,
                       ),
                     );
                     Navigator.pushReplacement(
@@ -76,182 +73,97 @@ class _SignupScreenState extends State<SignupScreen> {
                 builder: (context, state) {
                   final isLoading = state is AuthLoading;
 
-                  return AppStyles.buildGlassContainer(
-                    borderRadius: 24.0,
-                    padding: const EdgeInsets.all(24.0),
+                  return AppStyles.buildCardContainer(
+                    padding: const EdgeInsets.all(28.0),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header Title
-                          AppStyles.buildShaderText(
-                            'Create Account',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Sign up to get started',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+                          AppStyles.buildHeaderTitle(
+                            'Get Started 🚀',
+                            subtitle: 'Create your account to continue',
+                          )
+                              .animate()
+                              .fade(duration: 400.ms)
+                              .slideY(begin: -0.2, end: 0, curve: Curves.easeOut),
 
-                          // Email Field
+                          const SizedBox(height: 28),
+
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: const TextStyle(
-                                color: Colors.white70,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.email_outlined,
-                                color: Colors.white70,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                ),
-                              ),
+                            decoration: const InputDecoration(
+                              labelText: 'Email Address',
+                              prefixIcon: Icon(Icons.mail_outline_rounded,
+                                  color: AppStyles.primaryViolet),
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter an email';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
+                            validator: (val) => val == null || !val.contains('@')
+                                ? 'Enter a valid email'
+                                : null,
+                          )
+                              .animate()
+                              .fade(delay: 100.ms, duration: 400.ms)
+                              .slideX(begin: -0.05, end: 0),
+
                           const SizedBox(height: 16),
 
-                          // Password Field
                           TextFormField(
                             controller: _passwordController,
                             obscureText: true,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Password',
-                              labelStyle: const TextStyle(
-                                color: Colors.white70,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline,
-                                color: Colors.white70,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                ),
-                              ),
+                              prefixIcon: Icon(Icons.lock_outline_rounded,
+                                  color: AppStyles.primaryViolet),
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              return null;
-                            },
-                          ),
+                            validator: (val) => val == null || val.length < 6
+                                ? 'Minimum 6 characters'
+                                : null,
+                          )
+                              .animate()
+                              .fade(delay: 200.ms, duration: 400.ms)
+                              .slideX(begin: -0.05, end: 0),
+
                           const SizedBox(height: 16),
 
-                          // Confirm Password Field
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: true,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Confirm Password',
-                              labelStyle: const TextStyle(
-                                color: Colors.white70,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.lock_reset_outlined,
-                                color: Colors.white70,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                ),
-                              ),
+                              prefixIcon: Icon(Icons.shield_outlined,
+                                  color: AppStyles.primaryViolet),
                             ),
-                            validator: (value) {
-                              if (value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
-                              return null;
-                            },
-                          ),
+                            validator: (val) => val != _passwordController.text
+                                ? 'Passwords do not match'
+                                : null,
+                          )
+                              .animate()
+                              .fade(delay: 300.ms, duration: 400.ms)
+                              .slideX(begin: -0.05, end: 0),
+
                           const SizedBox(height: 24),
 
-                          // Sign Up Button
                           SizedBox(
                             width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
+                            child: AppStyles.buildPrimaryButton(
+                              text: 'Create Account',
+                              isLoading: isLoading,
                               onPressed: isLoading ? null : _onSignUpPressed,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppStyles.primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      'Sign Up',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
                             ),
-                          ),
+                          )
+                              .animate()
+                              .fade(delay: 400.ms, duration: 400.ms)
+                              .scale(begin: const Offset(0.96, 0.96)),
+
                           const SizedBox(height: 16),
 
-                          // Login Navigation Link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'Already have an account?',
-                                style: TextStyle(color: Colors.white70),
-                              ),
+                              const Text('Already have an account?',
+                                  style: TextStyle(color: AppStyles.textSecondary)),
                               TextButton(
                                 onPressed: () {
                                   Navigator.pushReplacement(
@@ -264,13 +176,13 @@ class _SignupScreenState extends State<SignupScreen> {
                                 child: const Text(
                                   'Log In',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppStyles.primaryViolet,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
+                          ).animate().fade(delay: 450.ms, duration: 400.ms),
                         ],
                       ),
                     ),
