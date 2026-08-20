@@ -10,14 +10,12 @@ class TodosCubit extends Cubit<TodosState> {
 
   TodosCubit(this._hiveService) : super(TodosInitial());
 
-  // Get current authenticated user ID
   String? get _currentUserId => _supabase.auth.currentUser?.id;
 
   Future<void> loadTodos() async {
     if (isClosed) return;
     emit(TodosLoading());
     try {
-      // 1. Fetch online data from Supabase
       if (_currentUserId != null) {
         final response = await _supabase
             .from('todos')
@@ -29,15 +27,9 @@ class TodosCubit extends Cubit<TodosState> {
             .map((json) => TodoModel.fromJson(Map<String, dynamic>.from(json)))
             .toList();
 
-        // Save to local storage cache
-      for (var todo in remoteTodos) {
- // Replace the for-loop on lines 33-35 with this single line:
-await _hiveService.saveAllTodos(remoteTodos); // Use your HiveService's single save method
-}
-       // await _hiveService.saveTodo(remoteTodos);
+        await _hiveService.saveAllTodos(remoteTodos);
       }
 
-      // 2. Read from local Hive storage
       final rawTodos = _hiveService.getTodos();
       final todos = rawTodos.map((e) {
         final Map<String, dynamic> formattedMap = Map<String, dynamic>.from(e as Map);
@@ -52,7 +44,12 @@ await _hiveService.saveAllTodos(remoteTodos); // Use your HiveService's single s
     }
   }
 
-  Future<void> addTodo(String title) async {
+  Future<void> addTodo({
+    required String title,
+    String? description,
+    String? fileUrl,
+    String? fileName,
+  }) async {
     if (isClosed) return;
     final userId = _currentUserId;
     if (userId == null) {
@@ -62,16 +59,17 @@ await _hiveService.saveAllTodos(remoteTodos); // Use your HiveService's single s
 
     try {
       final newTodo = TodoModel(
-        id: '', // Supabase auto-generates UUID primary key
+        id: '',
         userId: userId,
         title: title,
+        description: description,
+        fileUrl: fileUrl,
+        fileName: fileName,
         isCompleted: false,
         createdAt: DateTime.now(),
       );
 
-      // Insert into Supabase (omitting ID field via toJson)
       await _supabase.from('todos').insert(newTodo.toJson(includeId: false));
-
       await loadTodos();
     } catch (e) {
       if (isClosed) return;
@@ -98,7 +96,6 @@ await _hiveService.saveAllTodos(remoteTodos); // Use your HiveService's single s
     if (isClosed) return;
     try {
       await _supabase.from('todos').delete().eq('id', id);
-
       await loadTodos();
     } catch (e) {
       if (isClosed) return;

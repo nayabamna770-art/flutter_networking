@@ -1,15 +1,14 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user_signup_model.dart';
 import '../models/todo_model.dart';
+
 class LocalStorageService {
   Box get _usersBox => Hive.box('users');
   Box get _todosBox => Hive.box('todos');
 
   // ================= AUTHENTICATION =================
 
-  /// Handles local email/password sign-up
   Future<Map<String, dynamic>> signUp(UserSignUpModel user) async {
-    // Check if user already exists
     final existingUser = _usersBox.get(user.email);
     if (existingUser != null) {
       return {
@@ -18,7 +17,6 @@ class LocalStorageService {
       };
     }
 
-    // Store user credentials locally
     final userData = {
       'email': user.email,
       'password': user.password,
@@ -35,7 +33,6 @@ class LocalStorageService {
     };
   }
 
-  /// Handles local email/password login
   Future<Map<String, dynamic>> login(String email, String password) async {
     final userData = _usersBox.get(email);
 
@@ -69,36 +66,14 @@ class LocalStorageService {
     return _todosBox.values.toList();
   }
 
-  Future<void> addTodo(String title, String description) async {
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
-    final todoData = {
-      'id': id,
-      'title': title,
-      'description': description,
-      'isCompleted': false,
-    };
-    await _todosBox.put(id, todoData);
-  }
-
-  Future<void> toggleTodo(String id) async {
-    final todoData = _todosBox.get(id);
-    if (todoData != null) {
-      final updatedData = Map<String, dynamic>.from(todoData as Map);
-      updatedData['isCompleted'] =
-          !(updatedData['isCompleted'] as bool? ?? false);
-      await _todosBox.put(id, updatedData);
+  Future<void> saveAllTodos(List<TodoModel> todos) async {
+    await _todosBox.clear();
+    for (var todo in todos) {
+      await _todosBox.put(todo.id, todo.toJson(includeId: true));
     }
   }
 
   Future<void> deleteTodo(String id) async {
     await _todosBox.delete(id);
   }
-  // Add this inside your LocalStorageService class
-Future<void> saveAllTodos(List<TodoModel> todos) async {
-  final box = Hive.box('todos_box'); // Use your actual box name
-  await box.clear();
-  for (var todo in todos) {
-    await box.put(todo.id, todo.toJson());
-  }
-}
 }
